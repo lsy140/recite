@@ -33,7 +33,7 @@
     "allowToChangeInstallationDirectory": true,
     "deleteAppDataOnUninstall": false,
     "createDesktopShortcut": false,
-    "include":"installer.nsh",
+    "include":"build/installer.nsh",
     "license": "../LICENSE"
   },
   "linux": {
