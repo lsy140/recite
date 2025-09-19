@@ -36,7 +36,7 @@
 
 ## 使用方法
 
-1. 首次使用时，应用会在程序目录下的`resources`创建 `words.csv` 文件
+1. 首次使用时，应用会在程序目录下创建 `words.csv` 文件
 2. 在 `words.csv` 文件中按以下格式添加要学习的单词：
    ```
    chinese,english,count
