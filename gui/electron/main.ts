@@ -1,0 +1,103 @@
+import { app, BrowserWindow } from 'electron'
+
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
+import fs from 'fs'
+import { parse } from 'csv-parse/sync'
+import { ipcMain } from 'electron'
+
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+// The built directory structure
+//
+// ├─┬─┬ dist
+// │ │ └── index.html
+// │ │
+// │ ├─┬ dist-electron
+// │ │ ├── main.js
+// │ │ └── preload.mjs
+// │
+process.env.APP_ROOT = path.join(__dirname, '..')
+
+// 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
+export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
+export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
+export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
+
+process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
+
+let win: BrowserWindow | null
+
+const wordPath = VITE_DEV_SERVER_URL
+  ? path.join(process.env.APP_ROOT, 'words.csv')
+  : path.join(path.dirname(app.getAppPath()),"..", 'words.csv');
+
+if (!fs.existsSync(wordPath)) {
+  fs.promises.writeFile(wordPath, 'chinese,english,count\n');
+}
+
+ipcMain.handle('readWords', async (_event) => {
+  //First, determine whether the document exists.if not exist,create it
+  const fileCSV = await fs.promises.readFile(wordPath, 'utf-8');
+  const words = parse(fileCSV, {
+    columns: true,
+    skip_empty_lines: true
+  });
+  return words;
+})
+
+ipcMain.handle('writeWords', async (_event, words) => {
+  const header = 'chinese,english,count\n';
+  const rows = words.map((word: { chinese: string; english: string; count: string }) => {
+    return `${word.chinese},${word.english},${word.count}`
+  });
+  await fs.promises.writeFile(wordPath, header + rows.join('\n'));
+})
+
+
+function createWindow() {
+  win = new BrowserWindow({
+    title: '单词',
+    autoHideMenuBar: true,
+    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.mjs'),
+    },
+  })
+
+  // win.webContents.openDevTools()
+
+  // Test active push message to Renderer-process.
+
+  win.webContents.on('did-finish-load', () => {
+    win?.webContents.send('main-process-message', (new Date).toLocaleString())
+  })
+
+  if (VITE_DEV_SERVER_URL) {
+    win.loadURL(VITE_DEV_SERVER_URL)
+  } else {
+    // win.loadFile('dist/index.html')
+    win.loadFile(path.join(RENDERER_DIST, 'index.html'))
+  }
+}
+
+// Quit when all windows are closed, except on macOS. There, it's common
+// for applications and their menu bar to stay active until the user quits
+// explicitly with Cmd + Q.
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+    win = null
+  }
+})
+
+app.on('activate', () => {
+  // On OS X it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow()
+  }
+})
+
+app.whenReady().then(createWindow)
