@@ -1153,7 +1153,7 @@ process.env.APP_ROOT = S.join(Y, "..");
 const j = process.env.VITE_DEV_SERVER_URL, we = S.join(process.env.APP_ROOT, "dist-electron"), Z = S.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = j ? S.join(process.env.APP_ROOT, "public") : Z;
 let C;
-const M = j ? S.join(process.env.APP_ROOT, "words.csv") : S.join(S.dirname(T.getAppPath()), "words.csv");
+const M = j ? S.join(process.env.APP_ROOT, "words.csv") : S.join(S.dirname(T.getAppPath()), "..", "words.csv");
 J.existsSync(M) || J.promises.writeFile(M, `chinese,english,count
 `);
 G.handle("readWords", async (r) => {
