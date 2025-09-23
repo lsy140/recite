@@ -1,12 +1,12 @@
 <template>
     <button @click="back" class="back-button">返回</button>
+    <button v-show="isEnglish||showError" @click="speak" class="speak-button"></button>
     <div class="reciting-container">
         <p v-if="qa">{{ qa.question }}</p>
         <p v-else>没有更多问题了</p>
     </div>
     <!-- 错误提示框 -->
     <div v-if="showError" class="error-message">
-        <button @click="speak"></button>
         <p class="error-text">回答错误！正确答案是：</p>
         <p class="correct-answer">{{ all.rightAnswer.value }}</p>
         <button @click="closeError" class="close-button">我知道了</button>
@@ -23,7 +23,6 @@
                 class="answer-input" />
         </div>
         <div v-else-if="qa" class="options-answer">
-            <button @click="speak"></button>
             <label v-for="option in qa.options" :key="option" class="option"
                 :class="{ selected: userAnswer === option }">
                 <input type="radio" v-model="userAnswer" :value="option" class="radio-input" />
@@ -42,7 +41,7 @@
 
 <script setup lang="ts">
 import router from '../router';
-import { onMounted, ref } from 'vue';
+import {  ref } from 'vue';
 import all from '../composables/word';
 import tts from '../composables/tts';
 
@@ -57,11 +56,12 @@ const showComplete = ref(false); // 控制完成提示的显示
 function speak() {
     if (isEnglish.value && qa.value) {
         tts.speak(qa.value.question);
-    } else if (!isEnglish.value&&showError.value) {
+    } else if (!isEnglish.value && showError.value) {
         tts.speak(all.rightAnswer.value);
     }
 }
-onMounted(speak())
+speak();
+// onMounted(speak())
 function submitAnswer() {
     // 检查是否有问题
     if (!qa.value) {
@@ -77,7 +77,6 @@ function submitAnswer() {
         speak();
         return; // 不继续执行下一个问题的逻辑
     }
-
     // 切换到下一个问题
     nextQuestion();
 }
@@ -121,6 +120,9 @@ function back() {
 
 
 <style scoped>
+button {
+    outline: none;
+}
 .reciting-wrapper {
     width: 100%;
     max-width: 800px;
@@ -128,7 +130,34 @@ function back() {
     padding: 20px;
 }
 
+.speak-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6a93cb 0%, #a4bfef 100%);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    z-index: 10;
+    background-image: url('../assets/speak.svg');
+    background-size: 60% 60%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.speak-button:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
 .back-button {
+    position: fixed;
+    top: 0px;
+    left: 0;
     background: linear-gradient(135deg, #6c63ff 0%, #4e46c7 100%);
     color: white;
     border: none;
