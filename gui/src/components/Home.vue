@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import router from '../router';
-import checkEnoughWords from '../composables/all';
+import checkEnoughWords from '../composables/word';
+
 
 function startReciting() {
   if (checkEnoughWords.checkEnoughWords()) {

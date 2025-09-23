@@ -6,6 +6,7 @@
     </div>
     <!-- 错误提示框 -->
     <div v-if="showError" class="error-message">
+        <button @click="speak"></button>
         <p class="error-text">回答错误！正确答案是：</p>
         <p class="correct-answer">{{ all.rightAnswer.value }}</p>
         <button @click="closeError" class="close-button">我知道了</button>
@@ -18,9 +19,11 @@
     </div>
     <div class="inputAnswers">
         <div v-if="!isEnglish && qa">
-            <input type="text" v-model="userAnswer" @keyup.enter="submitAnswer" placeholder="请输入中文的翻译" class="answer-input" />
+            <input type="text" v-model="userAnswer" @keyup.enter="submitAnswer" placeholder="请输入中文的翻译"
+                class="answer-input" />
         </div>
         <div v-else-if="qa" class="options-answer">
+            <button @click="speak"></button>
             <label v-for="option in qa.options" :key="option" class="option"
                 :class="{ selected: userAnswer === option }">
                 <input type="radio" v-model="userAnswer" :value="option" class="radio-input" />
@@ -39,8 +42,9 @@
 
 <script setup lang="ts">
 import router from '../router';
-import { ref } from 'vue';
-import all from '../composables/all';
+import { onMounted, ref } from 'vue';
+import all from '../composables/word';
+import tts from '../composables/tts';
 
 const isEnglish = ref(true);
 const userAnswer = ref('');
@@ -49,6 +53,15 @@ const qa = ref(all.getQuestion(isEnglish.value));
 const showError = ref(false); // 控制错误提示的显示
 const showComplete = ref(false); // 控制完成提示的显示
 
+
+function speak() {
+    if (isEnglish.value && qa.value) {
+        tts.speak(qa.value.question);
+    } else if (!isEnglish.value&&showError.value) {
+        tts.speak(all.rightAnswer.value);
+    }
+}
+onMounted(speak())
 function submitAnswer() {
     // 检查是否有问题
     if (!qa.value) {
@@ -61,6 +74,7 @@ function submitAnswer() {
     if (!isCorrect.value) {
         // 显示错误提示和正确答案
         showError.value = true;
+        speak();
         return; // 不继续执行下一个问题的逻辑
     }
 
@@ -79,6 +93,7 @@ function nextQuestion() {
         all.checkWords();
         showComplete.value = true;
     }
+    speak();
 }
 
 function closeError() {
@@ -446,7 +461,7 @@ function back() {
     .card {
         padding: 20px;
     }
-    
+
     .option {
         padding: 15px;
     }
